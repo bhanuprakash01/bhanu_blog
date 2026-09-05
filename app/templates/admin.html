@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - AI News Hub{% endblock %}
+
+{% block content %}
+<div class="container main-layout admin-container">
+
+    {% if not authenticated %}
+    <!-- Admin Login Screen -->
+    <div class="admin-login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <span class="lock-icon">🔒</span>
+                <h2>Admin Authentication</h2>
+                <p>Enter administrative credentials configured in your server <code>.env</code>.</p>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+
+            <form action="/admin/login" method="post" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" required autocomplete="username" placeholder="admin">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password" placeholder="••••••••">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Sign In to Dashboard</button>
+            </form>
+            <div class="login-hint">
+                <span>Default credentials are set in <code>.env</code></span>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Admin Authenticated Dashboard -->
+    <div class="admin-dashboard-header">
+        <div>
+            <h1 class="admin-title">System Operations Dashboard</h1>
+            <p class="admin-subtitle">Monitor RSS ingestion, Gemini summarization pipeline, and feed reliability.</p>
+        </div>
+        <div class="admin-top-actions">
+            <a href="/admin/logout" class="btn btn-outline btn-sm">Sign Out</a>
+        </div>
+    </div>
+
+    <!-- Metric Stat Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total Articles</span>
+            <span class="stat-value">{{ total_articles }}</span>
+            <span class="stat-sub">{{ articles_today }} collected today</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">Processed with AI</span>
+            <span class="stat-value text-accent">{{ gemini_count }}</span>
+            <span class="stat-sub">{{ articles_processed_today }} completed today</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">Active Sources</span>
+            <span class="stat-value">{{ enabled_sources }} / {{ total_sources }}</span>
+            <span class="stat-sub">Configured RSS feeds</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-label">Failed Queue</span>
+            <span class="stat-value {% if failed_articles > 0 %}text-danger{% endif %}">{{ failed_articles }}</span>
+            <span class="stat-sub">Summarization errors</span>
+        </div>
+    </div>
+
+    <!-- Operational Controls Bar -->
+    <div class="admin-controls-card">
+        <div class="control-status">
+            <div class="status-indicator-dot {% if scheduler_running %}dot-green{% else %}dot-red{% endif %}"></div>
+            <div>
+                <strong>Scheduler:</strong> {{ "Active" if scheduler_running else "Stopped" }} &middot;
+                <span>Last Refresh: {{ last_refresh.strftime('%H:%M:%S UTC') if last_refresh else 'Pending' }}</span> &middot;
+                <span>Next Run: {{ next_refresh.strftime('%H:%M:%S UTC') if next_refresh else 'Scheduled' }}</span>
+            </div>
+        </div>
+
+        <div class="control-buttons">
+            <button id="adminRefreshBtn" class="btn btn-primary btn-sm">
+                🔄 Run News Collection Now
+            </button>
+
+            <form action="/admin/retry-failed" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-secondary btn-sm" {% if failed_articles == 0 %}disabled{% endif %}>
+                    🔁 Retry Failed ({{ failed_articles }})
+                </button>
+            </form>
+
+            <form action="/admin/clear-failed" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-outline btn-sm text-danger" {% if failed_articles == 0 %}disabled{% endif %}>
+                    🗑️ Clear Failed
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabbed or Sectioned Controls: Sources and Logs -->
+    <div class="admin-two-col">
+        <!-- Left: Source Management -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3>RSS Sources Management</h3>
+                <span class="badge badge-primary">{{ sources|length }} Feeds</span>
+            </div>
+            <p class="admin-card-desc">
+                Sources are loaded from <code>config/sources.yaml</code> and stored in SQLite. You can toggle, remove, or add new RSS feeds.
+            </p>
+
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for src in sources %}
+                        <tr>
+                            <td>
+                                <strong>{{ src.name }}</strong>
+                                <br><small class="text-muted text-truncate" style="max-width: 200px; display:inline-block;">{{ src.url }}</small>
+                            </td>
+                            <td><span class="badge badge-outline">{{ src.category }}</span></td>
+                            <td>
+                                <form action="/admin/sources/{{ src.id }}/priority" method="post" class="priority-form">
+                                    <input type="number" name="priority" value="{{ src.priority }}" min="1" max="10" class="priority-input" onchange="this.form.submit()">
+                                </form>
+                            </td>
+                            <td>
+                                {% if src.enabled %}
+                                <span class="badge badge-success">Enabled</span>
+                                {% else %}
+                                <span class="badge badge-muted">Disabled</span>
+                                {% endif %}
+                                {% if src.last_status == 'ERROR' %}
+                                <span class="badge badge-danger" title="{{ src.last_error }}">Error</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <form action="/admin/sources/{{ src.id }}/toggle" method="post">
+                                        <button type="submit" class="btn btn-xs {% if src.enabled %}btn-outline{% else %}btn-primary{% endif %}">
+                                            {{ "Disable" if src.enabled else "Enable" }}
+                                        </button>
+                                    </form>
+                                    <form action="/admin/sources/{{ src.id }}/delete" method="post" onsubmit="return confirm('Remove source {{ src.name }}?')">
+                                        <button type="submit" class="btn btn-xs btn-outline text-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add Source Form -->
+            <div class="add-source-box">
+                <h4>Add New RSS Feed</h4>
+                <form action="/admin/sources/add" method="post" class="add-source-form">
+                    <div class="form-row">
+                        <input type="text" name="name" placeholder="Publisher Name" required class="form-control">
+                        <input type="url" name="url" placeholder="https://domain.com/feed.xml" required class="form-control">
+                    </div>
+                    <div class="form-row">
+                        <select name="category" class="form-control">
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="number" name="priority" value="5" min="1" max="10" title="Priority 1-10" class="form-control" style="max-width: 100px;">
+                        <button type="submit" class="btn btn-primary">+ Add Source</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: Recent Processing & Error Logs -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3>System Logs & Errors</h3>
+                <span class="badge badge-outline">Live Telemetry</span>
+            </div>
+            <p class="admin-card-desc">Observability stream from <code>logs/app.log</code> and database records.</p>
+
+            <div class="log-stream">
+                {% for log in logs %}
+                <div class="log-entry log-{{ log.level.lower() }}">
+                    <div class="log-meta">
+                        <span class="log-badge">{{ log.level }}</span>
+                        <span class="log-time">{{ log.created_at.strftime('%H:%M:%S') }}</span>
+                        {% if log.source_name %}
+                        <span class="log-src">[{{ log.source_name }}]</span>
+                        {% endif %}
+                    </div>
+                    <div class="log-msg">{{ log.message }}</div>
+                    {% if log.details %}
+                    <pre class="log-details">{{ log.details[:300] }}</pre>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-muted">No errors or warnings recorded. All systems operational.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

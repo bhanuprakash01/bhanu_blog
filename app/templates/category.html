@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category_name }} News - AI News Hub{% endblock %}
+
+{% block content %}
+<div class="container main-layout">
+    <div class="category-header-banner">
+        <div class="cat-header-content">
+            <span class="section-pill">{% if is_trending %}Live Radar{% else %}Category Archive{% endif %}</span>
+            <h1 class="cat-page-title">{{ category_name }}</h1>
+            <p class="cat-page-desc">
+                {% if is_trending %}
+                Stories experiencing the highest momentum across publication velocity, importance evaluation, and community interest.
+                {% else %}
+                Latest artificial intelligence news, updates, and research papers categorized under {{ category_name }}.
+                {% endif %}
+            </p>
+            <div class="cat-stats-row">
+                <span>{{ total }} articles cataloged</span>
+                <span class="meta-dot">&middot;</span>
+                <span>Page {{ page }} of {{ total_pages }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Articles Grid -->
+    {% if articles %}
+    <div class="news-grid">
+        {% for item in articles %}
+        <article class="news-card">
+            <div class="news-card-img-wrap">
+                <a href="/article/{{ item.id }}">
+                    <img src="{{ item.image_url or '/static/img/placeholder.svg' }}" 
+                         alt="{{ item.title }}" 
+                         class="news-card-img"
+                         loading="lazy"
+                         onerror="this.src='https://images.unsplash.com/photo-1617791160505-6f008e1e6724?auto=format&fit=crop&w=600&q=80'">
+                </a>
+                <span class="category-tag">{{ item.category }}</span>
+            </div>
+
+            <div class="news-card-body">
+                <div class="card-meta sm">
+                    <span class="source-pill">{{ item.source_name }}</span>
+                    <span class="meta-dot">&middot;</span>
+                    <span class="meta-time">{{ item.published_at | time_ago }}</span>
+                    {% if is_trending %}
+                    <span class="trend-score-pill">⚡ {{ item.trending_score }}</span>
+                    {% endif %}
+                </div>
+
+                <h3 class="news-card-title">
+                    <a href="/article/{{ item.id }}">{{ item.title }}</a>
+                </h3>
+
+                <p class="news-card-summary">
+                    {{ (item.summary or item.description or "")[:180] }}...
+                </p>
+
+                <div class="news-card-footer">
+                    <a href="/article/{{ item.id }}" class="card-action-link">AI Summary & Takeaways &rarr;</a>
+                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="ext-link" title="Open original publisher">
+                        ↗
+                    </a>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination-wrap">
+        {% if page > 1 %}
+        <a href="?page={{ page - 1 }}" class="page-btn">&larr; Previous</a>
+        {% endif %}
+        <span class="page-indicator">Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}" class="page-btn">Next &rarr;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📂</div>
+        <h3>No articles found</h3>
+        <p>No articles found for this topic yet. New feeds will be parsed shortly.</p>
+        <a href="/" class="btn btn-primary">Return to Homepage</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

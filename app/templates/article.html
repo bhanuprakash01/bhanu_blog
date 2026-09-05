@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - AI News Hub{% endblock %}
+{% block meta_desc %}{{ article.summary or article.description or 'Artificial Intelligence news and summary.' }}{% endblock %}
+{% block og_title %}{{ article.title }}{% endblock %}
+{% block og_desc %}{{ (article.summary or article.description or '')[:200] }}{% endblock %}
+{% if article.image_url %}
+{% block og_image %}<meta property="og:image" content="{{ article.image_url }}">{% endblock %}
+{% endif %}
+
+{% block content %}
+<div class="container article-page-container">
+    <div class="article-layout">
+        
+        <!-- Main Article Column -->
+        <article class="article-main">
+            <!-- Breadcrumbs -->
+            <nav class="breadcrumb-nav">
+                <a href="/">Home</a> &rsaquo; 
+                <a href="/category/{{ article.category }}">{{ article.category }}</a> &rsaquo; 
+                <span>Story #{{ article.id }}</span>
+            </nav>
+
+            <!-- Article Header -->
+            <header class="article-header">
+                <div class="article-meta-top">
+                    <span class="category-badge lg">{{ article.category }}</span>
+                    <span class="importance-badge lg">★ Importance {{ article.importance_score }}/10</span>
+                </div>
+
+                <h1 class="article-headline">{{ article.title }}</h1>
+
+                <div class="article-byline">
+                    <div class="byline-source">
+                        <span class="source-avatar">{{ article.source_name[:1] }}</span>
+                        <div class="source-info">
+                            <span class="source-name-bold">{{ article.source_name }}</span>
+                            {% if article.author and article.author != article.source_name %}
+                            <span class="source-author">by {{ article.author }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="byline-date">
+                        <time datetime="{{ article.published_at.isoformat() }}">
+                            Published {{ article.published_at.strftime("%B %d, %Y at %I:%M %p UTC") }}
+                        </time>
+                        <span class="meta-dot">&middot;</span>
+                        <span>{{ article.published_at | time_ago }}</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Featured Image -->
+            {% if article.image_url %}
+            <div class="article-featured-image-wrap">
+                <img src="{{ article.image_url }}" 
+                     alt="{{ article.title }}" 
+                     class="article-featured-img"
+                     onerror="this.style.display='none'">
+            </div>
+            {% endif %}
+
+            <!-- AI Editorial Summary Box -->
+            <section class="ai-summary-container">
+                <div class="ai-summary-badge">
+                    <span class="sparkle-icon">✨</span>
+                    <span>AI Executive Summary</span>
+                    <span class="ai-provider-pill">Gemini Analysis</span>
+                </div>
+
+                <div class="ai-summary-text">
+                    {% if article.summary %}
+                        {{ article.summary }}
+                    {% else %}
+                        {{ article.description or "Automated summary queued." }}
+                    {% endif %}
+                </div>
+
+                <!-- Key Takeaways -->
+                {% if article.takeaways_list %}
+                <div class="takeaways-block">
+                    <h3 class="takeaways-heading">📌 Key Takeaways</h3>
+                    <ul class="takeaways-list">
+                        {% for item in article.takeaways_list %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Why It Matters -->
+                {% if article.why_it_matters %}
+                <div class="why-it-matters-block">
+                    <h3 class="why-heading">💡 Why It Matters</h3>
+                    <p class="why-text">{{ article.why_it_matters }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Legal / Attribution Disclosure -->
+                <div class="ai-disclosure">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span>
+                        AI-generated summary based on publicly available article information. Original reporting and copyright belong to <strong>{{ article.source_name }}</strong>.
+                    </span>
+                </div>
+            </section>
+
+            <!-- Call to Action: Read Original -->
+            <div class="original-source-cta">
+                <div class="cta-text-wrap">
+                    <h3>Explore the Complete Reporting</h3>
+                    <p>Read the original, unabridged story published directly on {{ article.source_name }}.</p>
+                </div>
+                <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg cta-btn">
+                    READ ORIGINAL ARTICLE &nearr;
+                </a>
+            </div>
+
+            <!-- Tags Section -->
+            {% if article.tags_list %}
+            <div class="article-tags-section">
+                <span class="tags-label">Keywords:</span>
+                <div class="tags-chips">
+                    {% for tag in article.tags_list %}
+                    <a href="/search?q={{ tag }}" class="tag-chip">#{{ tag }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </article>
+
+        <!-- Related Stories Sidebar -->
+        <aside class="article-sidebar">
+            <div class="sidebar-widget">
+                <h3 class="widget-title">Related in {{ article.category }}</h3>
+                <div class="related-list">
+                    {% for rel in related_articles %}
+                    <div class="related-card">
+                        {% if rel.image_url %}
+                        <a href="/article/{{ rel.id }}" class="related-img-link">
+                            <img src="{{ rel.image_url }}" alt="{{ rel.title }}" class="related-thumbnail" onerror="this.style.display='none'">
+                        </a>
+                        {% endif %}
+                        <div class="related-info">
+                            <span class="related-source">{{ rel.source_name }}</span>
+                            <h4 class="related-title">
+                                <a href="/article/{{ rel.id }}">{{ rel.title }}</a>
+                            </h4>
+                            <span class="related-time">{{ rel.published_at | time_ago }}</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No related stories yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Source Details Box -->
+            <div class="sidebar-widget">
+                <h3 class="widget-title">Publisher Transparency</h3>
+                <div class="publisher-meta">
+                    <p><strong>Source:</strong> {{ article.source_name }}</p>
+                    <p><strong>First Discovered:</strong> {{ article.discovered_at.strftime('%b %d, %Y %H:%M UTC') }}</p>
+                    <p><strong>Status:</strong> <span class="status-pill status-{{ article.processing_status.lower() }}">{{ article.processing_status }}</span></p>
+                    <p><strong>Trending Weight:</strong> {{ article.trending_score }} pts</p>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+{% endblock %}

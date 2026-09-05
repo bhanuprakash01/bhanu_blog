@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results{% if q %}: "{{ q }}"{% endif %} - AI News Hub{% endblock %}
+
+{% block content %}
+<div class="container main-layout">
+    <div class="search-header-panel">
+        <h1 class="search-page-title">Search AI News Archive</h1>
+        <p class="search-page-desc">Query verified reports, LLM research, benchmarks, and startup releases.</p>
+
+        <!-- Search Form & Filters -->
+        <form action="/search" method="get" class="search-filter-form">
+            <div class="search-bar-row">
+                <input type="text" name="q" value="{{ q }}" placeholder="Search topics, models, papers, entities..." class="search-input-lg">
+                <button type="submit" class="btn btn-primary search-submit-btn">Search</button>
+            </div>
+
+            <!-- Filters Bar -->
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label for="categoryFilter">Category:</label>
+                    <select name="category" id="categoryFilter" onchange="this.form.submit()">
+                        <option value="All" {% if category == 'All' %}selected{% endif %}>All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sourceFilter">Source:</label>
+                    <select name="source" id="sourceFilter" onchange="this.form.submit()">
+                        <option value="All" {% if source == 'All' %}selected{% endif %}>All Sources</option>
+                        {% for src in sources %}
+                        <option value="{{ src }}" {% if source == src %}selected{% endif %}>{{ src }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="dateFilter">Date Range:</label>
+                    <select name="date_range" id="dateFilter" onchange="this.form.submit()">
+                        <option value="all" {% if date_range == 'all' %}selected{% endif %}>All Time</option>
+                        <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
+                        <option value="24h" {% if date_range == '24h' %}selected{% endif %}>Last 24 Hours</option>
+                        <option value="7d" {% if date_range == '7d' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="30d" {% if date_range == '30d' %}selected{% endif %}>Last 30 Days</option>
+                    </select>
+                </div>
+
+                {% if q or category != 'All' or source != 'All' or date_range != 'all' %}
+                <a href="/search" class="clear-filters-btn">Clear Filters &times;</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Count -->
+    <div class="search-meta-bar">
+        <span class="results-count">Found <strong>{{ total }}</strong> matching stories</span>
+    </div>
+
+    <!-- Results Grid -->
+    {% if articles %}
+    <div class="news-grid">
+        {% for item in articles %}
+        <article class="news-card">
+            <div class="news-card-img-wrap">
+                <a href="/article/{{ item.id }}">
+                    <img src="{{ item.image_url or '/static/img/placeholder.svg' }}" 
+                         alt="{{ item.title }}" 
+                         class="news-card-img"
+                         loading="lazy"
+                         onerror="this.src='https://images.unsplash.com/photo-1617791160505-6f008e1e6724?auto=format&fit=crop&w=600&q=80'">
+                </a>
+                <span class="category-tag">{{ item.category }}</span>
+            </div>
+
+            <div class="news-card-body">
+                <div class="card-meta sm">
+                    <span class="source-pill">{{ item.source_name }}</span>
+                    <span class="meta-dot">&middot;</span>
+                    <span class="meta-time">{{ item.published_at | time_ago }}</span>
+                </div>
+
+                <h3 class="news-card-title">
+                    <a href="/article/{{ item.id }}">{{ item.title }}</a>
+                </h3>
+
+                <p class="news-card-summary">
+                    {{ (item.summary or item.description or "")[:180] }}...
+                </p>
+
+                <div class="news-card-footer">
+                    <a href="/article/{{ item.id }}" class="card-action-link">AI Summary & Takeaways &rarr;</a>
+                    <a href="{{ item.url }}" target="_blank" rel="noopener noreferrer" class="ext-link" title="Open original publisher">
+                        ↗
+                    </a>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination-wrap">
+        {% if page > 1 %}
+        <a href="?q={{ q }}&category={{ category }}&source={{ source }}&date_range={{ date_range }}&page={{ page - 1 }}" class="page-btn">&larr; Previous</a>
+        {% endif %}
+        <span class="page-indicator">Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a href="?q={{ q }}&category={{ category }}&source={{ source }}&date_range={{ date_range }}&page={{ page + 1 }}" class="page-btn">Next &rarr;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>No matching stories found</h3>
+        <p>Try refining your search terms or clearing selected category and date filters.</p>
+        <a href="/search" class="btn btn-outline">Reset Search</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

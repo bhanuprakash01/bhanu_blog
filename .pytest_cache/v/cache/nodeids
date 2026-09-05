@@ -1,0 +1,15 @@
+[
+  "tests/test_api.py::test_articles_list_and_search",
+  "tests/test_api.py::test_categories_endpoint",
+  "tests/test_api.py::test_health_check_endpoint",
+  "tests/test_api.py::test_web_html_routes",
+  "tests/test_deduplicator.py::test_exact_url_duplicate",
+  "tests/test_deduplicator.py::test_title_similarity_duplicate",
+  "tests/test_deduplicator.py::test_unique_article_allowed",
+  "tests/test_deduplicator.py::test_url_normalization",
+  "tests/test_relevance.py::test_negative_discard",
+  "tests/test_relevance.py::test_obvious_off_topic_exclusion",
+  "tests/test_relevance.py::test_positive_ai_content",
+  "tests/test_trending.py::test_trending_importance_multiplier",
+  "tests/test_trending.py::test_trending_recency_decay"
+]
