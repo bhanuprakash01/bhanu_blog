@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Rss, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Search, Rss, ShieldCheck, RefreshCw, User } from 'lucide-react';
 import { CategoryFilter } from '../types';
 
 interface HeaderProps {
@@ -8,6 +8,7 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onOpenAdmin: () => void;
+  onOpenAbout: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
 }
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   searchQuery,
   onSearchChange,
   onOpenAdmin,
+  onOpenAbout,
   onRefresh,
   isRefreshing,
 }) => {
@@ -111,6 +113,18 @@ export const Header: React.FC<HeaderProps> = ({
           <Rss className="w-3.5 h-3.5" />
           <span className="font-semibold">RSS</span>
         </a>
+
+        {/* About Creator */}
+        <button
+          onClick={onOpenAbout}
+          title="About Bhanu (Creator of AI News Hub)"
+          className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 py-1.5 px-2.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+        >
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center text-[10px] font-bold shadow-xs">
+            B
+          </div>
+          <span className="hidden sm:inline">About</span>
+        </button>
 
         {/* Admin Button */}
         <button

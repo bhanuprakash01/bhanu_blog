@@ -4,8 +4,10 @@ import { HeroBanner } from './components/HeroBanner';
 import { ArticleCard } from './components/ArticleCard';
 import { TrendingSidebar } from './components/TrendingSidebar';
 import { HubStatsSidebar } from './components/HubStatsSidebar';
+import { AboutCreatorCard } from './components/AboutCreatorCard';
 import { ArticleModal } from './components/ArticleModal';
 import { AdminModal } from './components/AdminModal';
+import { AboutModal } from './components/AboutModal';
 import { Footer } from './components/Footer';
 import { Article, RSSSource, HubStats, CategoryFilter } from './types';
 import { INITIAL_ARTICLES, INITIAL_SOURCES, INITIAL_STATS } from './data/initialData';
@@ -19,6 +21,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
+  const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // Auto-refresh countdown timer (seconds)
@@ -174,6 +177,7 @@ export default function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenAbout={() => setIsAboutOpen(true)}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
       />
@@ -246,8 +250,11 @@ export default function App() {
           </div>
         </main>
 
-        {/* Right Aside: Trending & Hub Statistics */}
+        {/* Right Aside: Trending, About Creator & Hub Statistics */}
         <aside className="w-full lg:w-80 flex flex-col sm:flex-row lg:flex-col gap-6 shrink-0 overflow-y-auto">
+          {/* About Creator Section */}
+          <AboutCreatorCard onOpenDetails={() => setIsAboutOpen(true)} />
+
           <TrendingSidebar
             articles={articles}
             onOpenArticle={(art) => setSelectedArticle(art)}
@@ -262,12 +269,18 @@ export default function App() {
       </div>
 
       {/* Footer */}
-      <Footer uptime={stats.uptime} />
+      <Footer uptime={stats.uptime} onOpenAbout={() => setIsAboutOpen(true)} />
 
       {/* Deep Dive Article Modal */}
       <ArticleModal
         article={selectedArticle}
         onClose={() => setSelectedArticle(null)}
+      />
+
+      {/* About Bhanu (Creator) Modal */}
+      <AboutModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
       />
 
       {/* Administration Portal Modal */}
