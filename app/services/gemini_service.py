@@ -131,7 +131,8 @@ EXCERPT: {content_excerpt or 'N/A'}
             except Exception as api_err:
                 logger.warning(f"Attempt {attempt+1}: Gemini API call error: {api_err}")
                 if attempt == 1:
-                    raise
+                    logger.warning(f"Falling back to editorial summary for '{title}' due to Gemini API error: {api_err}")
+                    return self._generate_fallback(title, description, source_name)
 
         raise RuntimeError(f"Could not generate summary for {title}")
 

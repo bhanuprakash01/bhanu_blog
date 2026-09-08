@@ -6,8 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings(BaseSettings):
     # Gemini AI
-    GEMINI_API_KEY: str = "AIzaSyDC7AMP7t94GSiqxIim2_j82QrSkdayaK0"
-    GEMINI_MODEL: str = "gemini-3.8-flash"
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     AI_PROVIDER: str = "gemini"
 
     # Database
