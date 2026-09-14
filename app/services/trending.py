@@ -88,3 +88,4 @@ class TrendingCalculator:
             a.trending_score = normalized
 
         db.commit()
+        return len(articles)

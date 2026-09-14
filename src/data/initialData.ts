@@ -120,7 +120,6 @@ export const INITIAL_ARTICLES: Article[] = [
     processing_status: 'PROCESSED',
     gemini_processed_at: new Date().toISOString(),
     related_stories_count: 24,
-    is_hero: true,
   },
   {
     id: 'art-1',

@@ -13,6 +13,7 @@ from app.models.article import Article, ProcessingStatus
 from app.models.source import Source
 from app.models.processing_log import ProcessingLog
 from app.services.article_processor import ArticleProcessor
+from app.services.trending import TrendingCalculator
 from app.services.scheduler import news_scheduler
 
 router = APIRouter(tags=["Admin"])
@@ -232,3 +233,13 @@ def clear_failed(request: Request, db: Session = Depends(get_db)):
     processor = ArticleProcessor(db)
     count = processor.clear_failed_articles()
     return RedirectResponse(url=f"/admin?success=Cleared+{count}+failed+articles", status_code=303)
+
+
+@router.post("/admin/recalculate-trending")
+def recalculate_trending(request: Request, db: Session = Depends(get_db)):
+    if not verify_admin(request):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    count = TrendingCalculator.update_all_trending_scores(db)
+    return RedirectResponse(url=f"/admin?success=Recalculated+trending+and+hero+scores+for+{count}+articles", status_code=303)
+

@@ -93,6 +93,12 @@
                 🔄 Run News Collection Now
             </button>
 
+            <form action="/admin/recalculate-trending" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-secondary btn-sm" title="Recalculate recency decay and update the homepage hero story">
+                    📈 Update Hero & Trending
+                </button>
+            </form>
+
             <form action="/admin/retry-failed" method="post" style="display:inline;">
                 <button type="submit" class="btn btn-secondary btn-sm" {% if failed_articles == 0 %}disabled{% endif %}>
                     🔁 Retry Failed ({{ failed_articles }})

@@ -100,6 +100,13 @@ class ArticleProcessor:
             canonical_url = self.deduplicator.normalize_url(item.url)
             content_hash = self.deduplicator.compute_content_hash(item.title, item.description)
 
+            initial_trending = TrendingCalculator.compute_article_score(
+                published_at=pub_date,
+                importance_score=5.0,
+                source_priority=5.0,
+                category_density=1.0,
+            )
+
             # Create article record
             article = Article(
                 title=item.title,
@@ -113,6 +120,7 @@ class ArticleProcessor:
                 description=item.description,
                 category=item.category,
                 relevance_score=rel_score,
+                trending_score=initial_trending,
                 content_hash=content_hash,
                 processing_status=ProcessingStatus.NEW if is_relevant else ProcessingStatus.SKIPPED,
             )
@@ -152,6 +160,12 @@ class ArticleProcessor:
                 article.category = summary_data.category
                 article.tags_list = summary_data.tags
                 article.importance_score = summary_data.importance_score
+                article.trending_score = TrendingCalculator.compute_article_score(
+                    published_at=article.published_at,
+                    importance_score=float(article.importance_score),
+                    source_priority=5.0,
+                    category_density=1.5,
+                )
                 article.processing_status = ProcessingStatus.PROCESSED
                 article.gemini_processed_at = datetime.now(timezone.utc)
                 stats["summarized"] += 1

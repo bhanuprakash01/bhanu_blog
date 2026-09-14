@@ -89,6 +89,15 @@ export default function App() {
           articles_today: data.articles_today || prev.articles_today + 1,
         }));
       }
+
+      // Re-fetch latest articles to refresh feed and dynamic hero story
+      const artRes = await fetch('/api/articles');
+      if (artRes.ok) {
+        const artData = await artRes.json();
+        if (artData.items && artData.items.length > 0) {
+          setArticles(artData.items);
+        }
+      }
     } catch (e) {
       console.warn('Refresh simulated on client');
     } finally {
@@ -97,6 +106,23 @@ export default function App() {
         setCountdown(1800); // reset 30m
       }, 800);
     }
+  };
+
+  // Set specific article as hero
+  const handleSetHero = async (articleId: string) => {
+    try {
+      await fetch(`/api/articles/${articleId}/set-hero`, { method: 'POST' });
+    } catch (e) {
+      console.warn('Set hero fallback on client');
+    }
+
+    setArticles((prev) =>
+      prev.map((a) => ({
+        ...a,
+        is_hero: a.id === articleId,
+        trending_score: a.id === articleId ? 99.5 : a.trending_score,
+      }))
+    );
   };
 
   // Toggle source in admin
@@ -152,15 +178,34 @@ export default function App() {
     return result;
   }, [articles, activeTab, searchQuery]);
 
-  // Hero article is top hero or first item
+  // Dynamic hero article: selects explicitly featured hero, or highest trending recent story with image
   const heroArticle = useMemo(() => {
-    return articles.find((a) => a.is_hero) || articles[0];
+    if (articles.length === 0) return null;
+
+    // 1. Check for explicitly featured hero
+    const explicitlyPromoted = articles.find((a) => a.is_hero);
+    if (explicitlyPromoted) {
+      return explicitlyPromoted;
+    }
+
+    // 2. Select top trending recent story
+    const withImages = articles.filter((a) => a.image_url);
+    const pool = withImages.length > 0 ? withImages : articles;
+
+    const sorted = [...pool].sort((a, b) => {
+      if (b.trending_score !== a.trending_score) {
+        return b.trending_score - a.trending_score;
+      }
+      return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+    });
+
+    return sorted[0];
   }, [articles]);
 
   // Grid articles (excluding hero if on Latest)
   const gridArticles = useMemo(() => {
     if (activeTab === 'Latest' && !searchQuery) {
-      return filteredArticles.filter((a) => a.id !== heroArticle.id);
+      return filteredArticles.filter((a) => a.id !== heroArticle?.id);
     }
     return filteredArticles;
   }, [filteredArticles, heroArticle, activeTab, searchQuery]);
@@ -275,6 +320,8 @@ export default function App() {
       <ArticleModal
         article={selectedArticle}
         onClose={() => setSelectedArticle(null)}
+        onSetHero={handleSetHero}
+        isHero={Boolean(selectedArticle && heroArticle && selectedArticle.id === heroArticle.id)}
       />
 
       {/* About Bhanu (Creator) Modal */}

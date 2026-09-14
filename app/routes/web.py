@@ -55,21 +55,49 @@ def home_page(request: Request, db: Session = Depends(get_db)):
         Article.processing_status.in_([ProcessingStatus.PROCESSED, ProcessingStatus.NEW])
     )
 
-    # 1. Hero story: top trending or highest importance story with image
+    # 1. Hero story: The most impactful fresh story.
+    # Trending score dynamically factors in exponential recency decay (40%), AI importance (30%),
+    # source priority (15%), and category clustering (15%).
+    now_utc = datetime.now(timezone.utc)
+    recent_cutoff = now_utc - timedelta(days=5)
+
+    # 1a. Highest trending recent article with image
     hero_story = (
-        base_query.filter(Article.image_url.isnot(None))
-        .order_by(Article.importance_score.desc(), Article.trending_score.desc(), Article.published_at.desc())
+        base_query.filter(
+            Article.published_at >= recent_cutoff,
+            Article.image_url.isnot(None),
+            Article.image_url != ""
+        )
+        .order_by(Article.trending_score.desc(), Article.published_at.desc())
         .first()
     )
+
+    # 1b. Fallback: Any recent top trending article
+    if not hero_story:
+        hero_story = (
+            base_query.filter(Article.published_at >= recent_cutoff)
+            .order_by(Article.trending_score.desc(), Article.published_at.desc())
+            .first()
+        )
+
+    # 1c. Fallback: Top trending article overall with image
+    if not hero_story:
+        hero_story = (
+            base_query.filter(Article.image_url.isnot(None), Article.image_url != "")
+            .order_by(Article.trending_score.desc(), Article.published_at.desc())
+            .first()
+        )
+
+    # 1d. Final fallback: Most recently published article
     if not hero_story:
         hero_story = base_query.order_by(Article.published_at.desc()).first()
 
     hero_id = hero_story.id if hero_story else 0
 
-    # 2. Top Stories (4-6 stories)
+    # 2. Top Stories (4 stories): Top trending recent articles excluding hero
     top_stories = (
         base_query.filter(Article.id != hero_id)
-        .order_by(Article.trending_score.desc(), Article.importance_score.desc())
+        .order_by(Article.trending_score.desc(), Article.published_at.desc())
         .limit(4)
         .all()
     )
