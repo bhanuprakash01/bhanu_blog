@@ -18,6 +18,7 @@ export interface Article {
   importance_score: number;
   relevance_score: number;
   trending_score: number;
+  content_hash?: string;
   processing_status: 'PROCESSED' | 'PENDING' | 'FILTERED_OUT' | 'FAILED';
   gemini_processed_at?: string;
   related_stories_count?: number;

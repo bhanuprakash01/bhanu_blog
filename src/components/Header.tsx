@@ -36,17 +36,22 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-xs">
       <div className="flex items-center gap-8">
-        {/* Brand */}
+        {/* Brand & Main Heading */}
         <button
           onClick={() => onSelectTab('Latest')}
-          className="flex items-center gap-2 cursor-pointer focus:outline-none"
+          className="flex items-center gap-3 cursor-pointer focus:outline-none text-left shrink-0"
         >
-          <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center shadow-xs">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded flex items-center justify-center shadow-xs shrink-0">
             <div className="w-4 h-4 border-2 border-white rotate-45"></div>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 uppercase select-none">
-            AI News Hub
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 select-none flex flex-wrap items-baseline gap-x-2">
+              <span className="uppercase">AI News Hub</span>
+              <span className="text-xs sm:text-sm font-medium text-slate-600 normal-case tracking-normal">
+                - The latest in Artificial Intelligence, summarized by Bhanu
+              </span>
+            </h1>
+          </div>
         </button>
 
         {/* Navigation */}
